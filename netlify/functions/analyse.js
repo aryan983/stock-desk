@@ -20,7 +20,7 @@ exports.handler = async (event) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-3-5-sonnet-20240620',
         max_tokens: 300,
         system: `You are a concise stock analyst giving a 3-month performance summary.
 Respond with EXACTLY 3 lines of plain text (no markdown, no bullets, no headers).
