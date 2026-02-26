@@ -244,7 +244,9 @@ function buildCard(q, extraClass = '') {
   const cls   = q.changePct > 0.05 ? 'up' : q.changePct < -0.05 ? 'down' : 'flat';
   const arrow = cls === 'up' ? '▲' : cls === 'down' ? '▼' : '—';
   const isOpen = openCards.has(q.ticker);
-  const abBadge = extraClass === 'abnormal' ? `<span class="abnormal-badge">unusual</span>` : '';
+  const abBadge = extraClass === 'abnormal'
+  ? `<span class="abnormal-badge">▲${Math.abs(q.changePct).toFixed(1)}% unusual</span>`
+  : '';
   const analysis = analysisCache[q.ticker];
 
   return `<div class="stock-card ${extraClass} ${isOpen ? 'open' : ''}" id="card-${q.ticker}">
