@@ -302,27 +302,15 @@ async function toggleCard(ticker) {
   // Fetch analysis
   try {
     const q = quotes[ticker];
-    const priceCtx = q?.price ? `Current price: ${fmtPrice(q.price, q.currency)}, ${q.changePct?.toFixed(2)}% today.` : '';
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const priceCtx = q?.price ? fmtPrice(q.price, q.currency) : '';
+    const response = await fetch('/.netlify/functions/analyse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `You are a concise stock analyst giving a 3-month performance summary. 
-Search for recent news and price performance for the given stock.
-Respond with EXACTLY 3 lines of plain text (no markdown, no bullets, no headers).
-Line 1: What happened to the price over the last 3 months (up/down how much, key driver).
-Line 2: The single most important recent news or catalyst.
-Line 3: Outlook — one sentence on what to watch.
-Keep each line under 120 characters. Be direct and specific.`,
-        messages: [{ role: 'user', content: `3-month analysis for ${ticker}. ${priceCtx}` }]
-      })
+      body: JSON.stringify({ ticker, price: priceCtx })
     });
     const data = await response.json();
-    const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('').trim();
-    const lines = text.split('\n').filter(l => l.trim()).slice(0,3);
+    if (!response.ok) throw new Error(data.error || 'Function error');
+    const lines = data.text.split('\n').filter(l => l.trim()).slice(0,3);
     analysisCache[ticker] = lines.join('<br>');
   } catch(e) {
     analysisCache[ticker] = `Analysis unavailable — ${e.message}`;
