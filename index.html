@@ -184,10 +184,11 @@ function sparkSVG(data, isUp) {
 async function fetchQuote(ticker) {
   const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`;
   const proxies = [
-    `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`,
     `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
+    `https://api.allorigins.win/get?url=${encodeURIComponent(yahooUrl)}`,
+    `https://thingproxy.freeboard.io/fetch/${yahooUrl}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(yahooUrl)}`
-  ];
+];
 
   let lastErr;
   for (const proxy of proxies) {
