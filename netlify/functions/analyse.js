@@ -3,8 +3,8 @@ exports.handler = async (event) => {
     return { statusCode: 405, body: 'Method not allowed' };
   }
 
-  const GEMINI_KEY = process.env.GEMINI_API_KEY;
-  if (!GEMINI_KEY) {
+  const GROQ_KEY = process.env.GROQ_API_KEY;
+  if (!GROQ_KEY) {
     return { statusCode: 500, body: JSON.stringify({ error: 'API key not configured' }) };
   }
 
@@ -12,34 +12,39 @@ exports.handler = async (event) => {
     const { ticker, price } = JSON.parse(event.body);
     if (!ticker) return { statusCode: 400, body: JSON.stringify({ error: 'No ticker provided' }) };
 
-    const prompt = `You are a concise stock analyst. Give a 3-month performance summary for ${ticker}.${price ? ` Current price: ${price}.` : ''}
-
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-8b-instant',
+        max_tokens: 300,
+        temperature: 0.4,
+        messages: [
+          {
+            role: 'system',
+            content: `You are a concise stock analyst giving a 3-month performance summary.
 Respond with EXACTLY 3 lines of plain text (no markdown, no bullets, no headers, no asterisks).
 Line 1: What happened to the price over the last 3 months (up/down how much, key driver).
 Line 2: The single most important recent news or catalyst.
 Line 3: Outlook — one sentence on what to watch.
-Keep each line under 120 characters. Be direct and specific.`;
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 300
+Keep each line under 120 characters. Be direct and specific.`
+          },
+          {
+            role: 'user',
+            content: `3-month analysis for ${ticker}.${price ? ` Current price: ${price}.` : ''}`
           }
-        })
-      }
-    );
+        ]
+      })
+    });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'Gemini API error');
+    if (!response.ok) throw new Error(data.error?.message || 'Groq API error');
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-    if (!text) throw new Error('No response from Gemini');
+    const text = data.choices?.[0]?.message?.content?.trim();
+    if (!text) throw new Error('No response from Groq');
 
     return {
       statusCode: 200,
