@@ -36,7 +36,12 @@ Keep each line under 120 characters. Be direct and specific.`,
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error?.message || 'Anthropic API error');
+    if (!response.ok) {
+      // Show full error details for debugging
+      const errMsg = data.error?.message || JSON.stringify(data);
+      const errType = data.error?.type || 'unknown';
+      throw new Error(`[${response.status}] ${errType}: ${errMsg}`);
+    }
 
     const text = data.content
       .filter(b => b.type === 'text')
